@@ -4,6 +4,8 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.io.File;
+
 
 /**
  * 读取串口数据并绘制成波形图
@@ -21,7 +23,15 @@ public class PortWaveApplication extends Application {
 
         // 使用较大的缓存来存放数据
         //portReader.eventBasedReadByte(new ReadCallback<>(portWave));
-        portReader.eventBasedReadShort(new ReadCallback<>(portWave));
+        ReadCallbackChain<Short> callbackChain = new ReadCallbackChain<>();
+        ReadCallback<Short> waveChartCallback = new ReadCallback<>(portWave);
+        int sampleRate = (int) (10 * 1000);
+        WaveWriter saveWavFileCallback = new WaveWriter(new File("serial-2.wav"), 10*sampleRate, sampleRate);
+
+        callbackChain.getCallbackList().add(waveChartCallback);
+        callbackChain.getCallbackList().add(saveWavFileCallback);
+
+        portReader.eventBasedReadShort(callbackChain);
         //portReader.eventBasedRead();
 
         final Scene scene = new Scene(portWave, 800, 600);

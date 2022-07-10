@@ -177,7 +177,7 @@ public class PortReader {
      *
      * @param shortCallback 回调函数，当从串口读到数据时会调用
      */
-    public void eventBasedReadShort(ReadCallback<Short> shortCallback) {
+    public void eventBasedReadShort(Callback<Short[], Void> shortCallback) {
         SerialPort comPort = SerialPort.getCommPorts()[0];
         comPort.openPort();
         // addDataListener() 会启动一个非daemon线程，读取端口数据，如果没有数据，就会一直等待，不会超时退出

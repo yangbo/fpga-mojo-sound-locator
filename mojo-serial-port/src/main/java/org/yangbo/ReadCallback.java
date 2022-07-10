@@ -26,7 +26,9 @@ class ReadCallback<T extends Number> implements Callback<T[], Void> {
 
     @Override
     public Void call(T[] samples) {
-        logger.debug("读到{}数据", samples.length);
+        if (filled == 0) {
+            logger.debug("读到{}数据", samples.length);
+        }
         // 本次可以写入多少元素
         int writable = samples.length;
         if (filled + samples.length >= BUF_LEN) {
