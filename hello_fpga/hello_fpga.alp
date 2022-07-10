@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hello_fpga" board="Mojo" language="Lucid" version="3">
+  <files>
+    <src top="true">mojo_top.luc</src>
+    <component>reset_conditioner.luc</component>
+    <constraint lib="true">mojo.ucf</constraint>
+  </files>
+</project>

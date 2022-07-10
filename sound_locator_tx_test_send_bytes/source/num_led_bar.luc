@@ -1,0 +1,27 @@
+/*
+显示 16bits 数字到 16 个led上。
+*/
+module num_led_bar (
+    input num[16],              // 要显示的数字，是二进制补码
+    output ring_value[16][8]    // led_ring values
+  ) {
+  var i;
+  sig complement[16];
+  always {
+
+    for (i=0; i<16; i++) {
+      complement = num;
+      if(num[15]==b1){
+        // MSB=1，是负数，计算 abs(num)
+        complement = (~num)+16h01;
+      }
+      // 将 2^16=65535 分为 16 份，每份是2048，这样才是线性显示。
+      // 否则是按指数形等级显示的。2^12=4096，而 2^16=65535，差距还是很大的。
+      if (complement >= i*2048){
+        ring_value[i]=8hFF;
+      }else{
+        ring_value[i]=8h0;
+      }
+    }
+  }
+}

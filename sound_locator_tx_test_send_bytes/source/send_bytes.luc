@@ -1,0 +1,109 @@
+/*
+ * 发送多字节到串口的模块。
+ * 使用方法：
+   0. 连接 clk, rst signal
+   1. 连接 AVR 的管脚 avr_tx,avr_rx,avr_rx_busy,cclk
+   2. 在 busy==0 时设置 data 和 fput=1 进行发送
+   
+   在实现时发现 busy 输出信号会影响输入信号，造成错误，所以需要引入状态，分步骤进行保存、发送。
+ */
+module send_bytes (
+    input clk,       // clock
+    input rst,       // reset
+    
+    input cclk,          // AVR configure clock
+    input avr_rx_busy,   // 连接到 avr_rx_busy，当 AVR 忙时，不发送数据
+    input avr_tx,        // AVR 的tx脚
+    output avr_rx,       // AVR 的rx脚
+    
+    input data[16],  // 要发送的数据
+    input fput,      // 发送数据标志，1表示有数据要发送
+    output busy      // 忙标志，1表示不能发送新数据
+  ) {
+
+  .clk(clk) {
+     .rst(rst) {
+       // 状态
+       fsm state = {IDLE, SEND1, SEND2};
+       // 待发送字节缓存
+       dff remain_buf[16];
+       // 待发送标志, 1=有待发送数据，0=没有
+       //dff has_remain;
+       // 缓存 fput 标志
+       //dff fput_buf;
+     }
+     .rst(0){
+      // 用来通过 USB 发送串口数据
+      avr_interface avr;
+    }
+  }
+  
+  always {
+    // 本模块忙 = 有待发送字节 或 avr 发送端忙
+    busy = (state.q != state.IDLE) | avr.tx_busy;
+    
+    // 只有当 has_remain == 0 时才允许更新 fput_buf，否则保持原值。因为不这样，会导致一旦 busy=1，fput 就会被置为0，导致只能发送出去第一个字节
+    /*
+    if (!has_remain.q)
+      fput_buf.d = fput;
+    */
+    // ========= 配置 AVR 接口 =======
+    avr.cclk = cclk;
+    avr.tx_block = avr_rx_busy;
+    avr.spi_ss = bz;
+    avr.spi_mosi = bz;
+    avr.spi_sck = bz;
+    avr.channel = hf;           // ADC is unused so disable
+    avr.rx = avr_tx;
+    avr_rx = avr.tx;
+
+    // 默认不发数据
+    avr.new_tx_data = 0;
+    avr.tx_data = 0;
+    
+    // 默认必须设置为 0，否则因为有条件不设置 has_remain 时就会出错
+    // has_remain.d = 0;
+    
+    case (state.q){
+      // 读取并缓存输入信号
+      state.IDLE:
+        if (fput) {
+          remain_buf.d = data;
+          state.d = state.SEND1;
+        }
+      // 逐字节发送
+      state.SEND1:
+        if (!avr.tx_busy){
+          avr.tx_data = remain_buf.q[15-:8];
+          avr.new_tx_data = 1;
+          state.d = state.SEND2;
+        }
+      state.SEND2:
+        if (!avr.tx_busy){
+          avr.tx_data = remain_buf.q[7:0];
+          avr.new_tx_data = 1;
+          state.d = state.IDLE;
+        }
+    }
+    /* 旧版本，有乱序问题：
+    // 发送 16bits 到 8bits 串口
+    if (has_remain.q && !avr.tx_busy) {
+      // 有待发送字节
+      avr.tx_data = remain_buf.q;
+      avr.new_tx_data = 1;
+      // 发送了就置 待发送标志 为0，避免下个 clk 再次发送
+      has_remain.d = 0;
+    } else if(fput_buf.q) {
+      // 没有待发送字节且有要发送的新数据
+      
+      // 直接发送高 8bits，所以是大端字节序(BigEndian)
+      avr.tx_data = data[15-:8];
+      avr.new_tx_data = 1;
+      // 缓存低 8bits
+      remain_buf.d = data[7:0];
+      // 置 待发送标志 为1
+      has_remain.d = 1;
+    }
+    */
+  }
+}

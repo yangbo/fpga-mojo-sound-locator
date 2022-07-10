@@ -1,0 +1,14 @@
+# Output products list for <cic_decimation>
+cic_decimation.asy
+cic_decimation.gise
+cic_decimation.ngc
+cic_decimation.v
+cic_decimation.veo
+cic_decimation.xco
+cic_decimation.xise
+cic_decimation\doc\cic_compiler_v3_0_readme.txt
+cic_decimation\doc\cic_compiler_v3_0_vinfo.html
+cic_decimation\doc\ds845_cic_compiler.pdf
+cic_decimation_flist.txt
+cic_decimation_xmdf.tcl
+demo_tb\tb_cic_decimation.vhd

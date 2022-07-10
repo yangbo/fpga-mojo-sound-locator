@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="sound_led_ring_blink" board="Mojo" language="Lucid" version="3">
+  <files>
+    <src>led_ring.luc</src>
+    <component>decoder.luc</component>
+    <src>blinker.luc</src>
+    <component>counter.luc</component>
+    <component>reset_conditioner.luc</component>
+    <src top="true">mojo_top.luc</src>
+    <constraint lib="true">mojo.ucf</constraint>
+    <constraint>mic_shield.ucf</constraint>
+  </files>
+</project>

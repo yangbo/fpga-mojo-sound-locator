@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="sound_locator" board="Mojo" language="Lucid" version="3">
+  <files>
+    <component>uart_tx.luc</component>
+    <component>cclk_detector.luc</component>
+    <component>reg_interface.luc</component>
+    <component>pipeline.luc</component>
+    <component>uart_rx.luc</component>
+    <component>counter.luc</component>
+    <component>reset_conditioner.luc</component>
+    <src>sound_locator.luc</src>
+    <component>simple_dual_ram.v</component>
+    <src top="true">mojo_top.luc</src>
+    <component>spi_peripheral.luc</component>
+    <src>pdm_mics.luc</src>
+    <src>led_ring.luc</src>
+    <component>decoder.luc</component>
+    <component>edge_detector.luc</component>
+    <component>avr_interface.luc</component>
+    <component>async_fifo.luc</component>
+    <src>hann_rom.luc</src>
+    <constraint>debug.ucf</constraint>
+    <constraint lib="true">mojo.ucf</constraint>
+    <constraint>mic_shield.ucf</constraint>
+    <core name="decimation_filter">
+      <src>..\decimation_filter.ngc</src>
+      <src>..\decimation_filter.v</src>
+    </core>
+    <core name="decimation_filter">
+      <src>..\decimation_filter.v</src>
+      <src>..\decimation_filter.ngc</src>
+    </core>
+    <core name="mag_phase_calculator">
+      <src>..\mag_phase_calculator.ngc</src>
+      <src>..\mag_phase_calculator.v</src>
+    </core>
+    <core name="xfft_v8_0">
+      <src>..\xfft_v8_0.ngc</src>
+      <src>..\xfft_v8_0.v</src>
+    </core>
+  </files>
+</project>

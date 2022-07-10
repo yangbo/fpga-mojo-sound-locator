@@ -1,0 +1,79 @@
+module mojo_top (
+    input clk,              // 50MHz clock
+    input rst_n,            // reset button (active low)
+    output led [8],         // 8 user controllable LEDs
+    input cclk,             // configuration clock, AVR ready when high
+    output spi_miso,        // AVR SPI MISO
+    input spi_ss,           // AVR SPI Slave Select
+    input spi_mosi,         // AVR SPI MOSI
+    input spi_sck,          // AVR SPI Clock
+    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
+    input avr_tx,           // AVR TX (FPGA RX)
+    output avr_rx,          // AVR RX (FPGA TX)
+    input avr_rx_busy       // AVR RX buffer full
+    /*
+    // mic shield
+    output mic_led1,
+    output mic_led2,
+    output mic_led3,
+    output mic_led4,
+    output mic_g1,
+    output mic_g2,
+    output mic_g3,
+    output mic_g4
+    */
+  ) {
+  
+  sig rst;                  // reset signal
+  
+  // values for led ring 
+  sig value[16][8];
+  sig new_value;
+  
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+
+    .rst(rst) {
+      // blinker myBlinker;
+      led_ring ring(.value(value), .new_value(new_value));
+    }
+  }
+  
+  var i;            // 循环用的变量，只能在 always 块前面定义
+  var current_num;  // 只能在后面初始化值
+  
+  always {
+    reset_cond.in = ~rst_n;    // input raw inverted reset signal
+    rst = reset_cond.out;      // conditioned reset
+    
+    //led = 8x{myBlinker.blink}; // blink LEDs
+    //led = 8x{bx};    // 设置为 1 高电压3.3v，以便让 mic-shield 上的 LED 不导通，因为它们是共阳极的
+    spi_miso = bz;             // not using SPI
+    spi_channel = bzzzz;       // not using flags
+    avr_rx = bz;               // not using serial port
+    
+    current_num = 8hFF + 1;  // 0xFF = 255,16*16=256，所以这里要多加 1 
+    
+    for (i=0; i<16; i++) {
+      current_num = current_num - 8d16;
+      value[i] = current_num;
+    }
+    
+    led = ring.leds;
+    
+    new_value = b1;
+    
+    /* // 也可以用自定义的 pin，port 来设置
+    mic_led1 = myBlinker.blink;
+    mic_led2 = b1;
+    mic_led3 = myBlinker.blink;
+    mic_led4 = b1;
+    mic_g1 = b0;    // MOSFET 是 P-channel，所以 Gate 为 0v 时导通
+    mic_g2 = b1;
+    mic_g3 = b0;
+    mic_g4 = b1;
+    */
+  }
+}

@@ -1,0 +1,128 @@
+module mojo_top (
+    input clk,              // 50MHz clock
+    input rst_n,            // reset button (active low)
+    output led [8],         // 8 user controllable LEDs
+    input cclk,             // configuration clock, AVR ready when high
+    
+    input mic_data[7],      // 麦克风
+    output mic_clk,         // 麦克风的时钟
+    
+    output spi_miso,        // AVR SPI MISO
+    input spi_ss,           // AVR SPI Slave Select
+    input spi_mosi,         // AVR SPI MOSI
+    input spi_sck,          // AVR SPI Clock
+    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
+    input avr_tx,           // AVR TX (FPGA RX)
+    output avr_rx,          // AVR RX (FPGA TX)
+    input avr_rx_busy       // AVR RX buffer full
+  ) {
+  
+  sig rst;                  // reset signal
+  
+  // values for led ring 
+  sig ring_value[16][8];
+  // 允许拷贝新值
+  sig new_value;
+  
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+
+    .rst(rst) {
+      // 起始位置计数器
+      counter ctr(#SIZE(4), #DIV(23));
+      // 更新值计数器，且 value 在下一次 clock 时变为 0，要比 ctr 计数器小才行，否则会有跳跃更新的情况
+      //counter update_ctr(#SIZE(1), #DIV(21), #TOP(1));
+      
+      blinker myBlinker;
+      led_ring ring(.value(ring_value), .new_value(new_value));
+      
+      pdm_mics pdm_mics;     // PDM mic filter
+    }
+    /*
+    .rst(0){
+      // the avr_interface module is used to talk to the AVR for access to the USB port and analog pins
+      avr_interface avr;
+      reg_interface reg;
+    }*/
+  }
+  
+  num_led_bar num_led_bar;
+  
+  var i;
+  var current_num;  // 只能在后面初始化值
+  // 下面是关键：定义4bits宽的 signal 这样可以利用溢出实现循环效果，如果不使用 signal 那么工具会生成一个大数来存放溢出的数字
+  // 导致无法寻址，电路会使用默认值（0）。
+  sig index[4];
+  
+  always {
+    reset_cond.in = ~rst_n;    // input raw inverted reset signal
+    rst = reset_cond.out;      // conditioned reset
+    
+    //led = 8x{myBlinker.blink}; // blink LEDs
+    //led = 8x{bx};            // 设置为 1 高电压3.3v，以便让 mic-shield 上的 LED 不导通，因为它们是共阳极的
+
+    spi_miso = bz;             // not using SPI
+    spi_channel = bzzzz;       // not using flags
+    avr_rx = bz;               // not using serial port
+
+    /*
+    // debug start, connect inputs of avr
+    avr.cclk = cclk;
+    avr.spi_ss = spi_ss;
+    avr.spi_mosi = spi_mosi;
+    avr.spi_sck = spi_sck;
+    avr.rx = avr_tx;
+    avr.channel = hf;           // ADC is unused so disable
+    avr.tx_block = avr_rx_busy; // block TX when AVR is busy
+    
+    // connect outputs of avr
+    spi_miso = avr.spi_miso;
+    spi_channel = avr.spi_channel;
+    avr_rx = avr.tx;
+    
+    reg.tx_busy = avr.tx_busy;
+    avr.tx_data = reg.tx_data;
+    avr.new_tx_data = reg.new_tx_data;
+    reg.rx_data = avr.rx_data;
+    reg.new_rx_data = avr.new_rx_data;
+    
+    reg.regIn.data = 32bx;
+    reg.regIn.drdy = 0;
+    */
+    // debug end
+    
+    current_num = 9hFF + 1;    // 0xFF = 255,16*16=256，所以这里要多加 1 才能最后得到0
+    
+    // value 为 1 只保持一个 clock 周期
+    new_value = 1; //update_ctr.value;
+
+    /*
+    for (i=0; i<16; i++) {
+      current_num = current_num - 8d16;
+      // 渐变方向：+/- i 会影响渐变的方向，+顺时针，-逆时针
+      // 旋转的方向是由 ctr.value 的变化决定的
+      // 反向：顺时针，就用累加；逆时针就用递减法
+      // index = (4hF-ctr.value)-i;
+      index = ctr.value-i;
+      ring_value[index] = current_num;
+    }*/
+    // 连接 led 到 led_ring
+    led = ring.leds;
+    
+    // 使用麦克风
+    // connect up the microphones
+    pdm_mics.mic_data = mic_data;
+    mic_clk = pdm_mics.mic_clk;
+    
+    // 取第0个麦克风的输出，16bits 分两段，给 2 个LED
+    //ring_value[0] = pdm_mics.sample[0][7-:8];
+    //ring_value[1] = pdm_mics.sample[0][15-:8];
+    
+    num_led_bar.num = pdm_mics.sample[6];
+    // 连接 num_led_bar 的输出到 led_ring
+    ring_value = num_led_bar.ring_value;
+    new_value = pdm_mics.new_sample;
+  }
+}

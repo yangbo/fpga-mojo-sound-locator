@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="sound_locator_tx_wave_16" board="Mojo" language="Lucid" version="3">
+  <files>
+    <component>uart_tx.luc</component>
+    <component>cclk_detector.luc</component>
+    <src top="true">mojo_top.luc</src>
+    <component>reg_interface.luc</component>
+    <src>led_ring.luc</src>
+    <component>counter.luc</component>
+    <component>uart_rx.luc</component>
+    <src>send_bytes.luc</src>
+    <component>reset_conditioner.luc</component>
+    <src>pdm_mics.luc</src>
+    <component>simple_dual_ram.v</component>
+    <component>spi_peripheral.luc</component>
+    <component>decoder.luc</component>
+    <component>edge_detector.luc</component>
+    <component>avr_interface.luc</component>
+    <src>blinker.luc</src>
+    <component>fifo.luc</component>
+    <src>num_led_bar.luc</src>
+    <constraint>mic_shield.ucf</constraint>
+    <constraint lib="true">mojo.ucf</constraint>
+    <core name="cic_decimation">
+      <src>..\cic_decimation.ngc</src>
+      <src>..\cic_decimation.v</src>
+    </core>
+    <core name="cic_decimation">
+      <src>..\cic_decimation.ngc</src>
+      <src>..\cic_decimation.v</src>
+    </core>
+  </files>
+</project>

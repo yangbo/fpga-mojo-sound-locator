@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="basic-cpu" board="Mojo" language="Lucid" version="3">
+  <files>
+    <src top="true">mojo_top.luc</src>
+    <src>reset_conditioner.luc</src>
+    <src>cpu.luc</src>
+    <src>instRom.luc</src>
+    <constraint lib="true">mojo.ucf</constraint>
+  </files>
+</project>

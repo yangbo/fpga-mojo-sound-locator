@@ -1,0 +1,14 @@
+# Output products list for <mag_phasse_calculator>
+demo_tb\tb_mag_phasse_calculator.vhd
+mag_phasse_calculator.asy
+mag_phasse_calculator.gise
+mag_phasse_calculator.ngc
+mag_phasse_calculator.v
+mag_phasse_calculator.veo
+mag_phasse_calculator.xco
+mag_phasse_calculator.xise
+mag_phasse_calculator\doc\cordic_v5_0_readme.txt
+mag_phasse_calculator\doc\cordic_v5_0_vinfo.html
+mag_phasse_calculator\doc\ds858_cordic.pdf
+mag_phasse_calculator_flist.txt
+mag_phasse_calculator_xmdf.tcl

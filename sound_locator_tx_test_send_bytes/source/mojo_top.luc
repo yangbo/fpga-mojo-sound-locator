@@ -1,0 +1,113 @@
+/*
+ * 将 PDM Mic 信号发送到串口，用 Java 程序读取并绘制出波形图。
+ * 使用 asyncFIFO 发送 16 bits、2 bytes 到串口。
+ * 另外一个思路：先发送高8bits到串口，然后用一个 8bits DFF 存储下次clk要发送的8bits，用 1bit DFF 存储是否有待发送的数据，
+   有的话就先发送DFF中的8bits，没有的话就发送当前的 16 bits。
+ */
+module mojo_top (
+    input clk,              // 50MHz clock
+    input cclk,             // configuration clock, AVR ready when high
+    input rst_n,            // reset button (active low)
+    
+    output led [8],         // 8 user controllable LEDs
+    
+    input mic_data[7],      // 麦克风
+    output mic_clk,         // 麦克风的时钟
+    
+    /*
+    output spi_miso,        // AVR SPI MISO
+    input spi_ss,           // AVR SPI Slave Select
+    input spi_mosi,         // AVR SPI MOSI
+    input spi_sck,          // AVR SPI Clock
+    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
+    */
+    
+    input avr_tx,           // AVR TX (FPGA RX)
+    output avr_rx,          // AVR RX (FPGA TX)
+    input avr_rx_busy       // AVR RX buffer full
+  ) {
+  
+  sig rst;                  // reset signal
+  sig sample[16];           // 一个 16bits 的采样数据
+  
+  
+  .clk(clk) {
+    // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+
+    .rst(rst) {
+      // 麦克风
+      pdm_mics pdm_mics;     // PDM mic filter
+      led_ring ring;
+      // 待发送字节缓存
+      //dff remain_buf[8];
+      // 待发送标志, 1=有待发送数据，0=没有
+      //dff has_remain;
+      send_bytes send_bytes(.cclk(cclk), .avr_rx_busy(avr_rx_busy));
+    }
+    
+    .rst(0){
+      // the avr_interface module is used to talk to the AVR for access to the USB port and analog pins
+      // avr_interface avr;
+    }
+  }
+  
+  num_led_bar num_led_bar;
+  
+  always {
+    reset_cond.in = ~rst_n;    // input raw inverted reset signal
+    rst = reset_cond.out;      // conditioned reset
+    
+    // ========= 配置 AVR 接口 =======
+    // spi_miso = bz;             // not using SPI
+    // spi_channel = bzzzz;       // not using flags
+    /*
+    avr.cclk = cclk;
+    avr.spi_ss = spi_ss;
+    avr.spi_mosi = spi_mosi;
+    avr.spi_sck = spi_sck;
+
+    avr.channel = hf;           // ADC is unused so disable
+    
+    // connect outputs of avr
+    spi_miso = avr.spi_miso;
+    spi_channel = avr.spi_channel;
+    */
+    // using serial port
+    /*
+    avr_rx = avr.tx;           
+    avr.rx = avr_tx;
+    avr.tx_block = avr_rx_busy;   // block TX when AVR is busy
+    */
+    // ========== AVR 接口配置结束 =========
+    
+    led = 8d0;
+    
+    // 使用麦克风
+    pdm_mics.mic_data = mic_data;
+    mic_clk = pdm_mics.mic_clk;
+    
+    // 用 LED RING 显示 Mic 数据
+    sample = pdm_mics.sample[6];
+    num_led_bar.num = sample;
+    ring.value = num_led_bar.ring_value;    // 将数字转换为 led_ring bits signal
+    ring.new_value = 1;
+    led = ring.leds;
+    
+    // 发送采样数据到 avr 串口
+    // avr.tx_data = sample[15-:8];
+    // avr.new_tx_data = pdm_mics.new_sample;
+    
+    // 配置 send_bytes 模块
+    avr_rx = send_bytes.avr_rx;
+    send_bytes.avr_tx = avr_tx;
+    send_bytes.data = 16h0;
+    send_bytes.fput = 0;
+    // 发送 2bytes
+    if (!send_bytes.busy){
+      send_bytes.data = 16hABCD;
+      send_bytes.fput = 1;
+    }
+  }
+}
