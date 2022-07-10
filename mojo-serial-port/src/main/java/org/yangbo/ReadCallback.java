@@ -17,6 +17,7 @@ class ReadCallback<T extends Number> implements Callback<T[], Void> {
     protected int BUF_LEN = 1024;
     protected double xValues[] = new double[BUF_LEN];
     protected double yValues[] = new double[BUF_LEN];
+    protected double errors[] = new double[BUF_LEN];
     protected int filled = 0;
 
     public ReadCallback(PortWave portWave) {
@@ -40,7 +41,7 @@ class ReadCallback<T extends Number> implements Callback<T[], Void> {
         filled += samples.length;
         if (filled >= BUF_LEN) {
             // 缓存已满，写入数据集
-            portWave.getDataSet().set(xValues, yValues);
+            portWave.getDataSet().set(xValues, yValues, errors, errors);
             // 清 0
             Arrays.fill(xValues, 0);
             Arrays.fill(yValues, 0);
