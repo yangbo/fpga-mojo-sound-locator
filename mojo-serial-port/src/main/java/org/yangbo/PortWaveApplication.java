@@ -25,8 +25,8 @@ public class PortWaveApplication extends Application {
         //portReader.eventBasedReadByte(new ReadCallback<>(portWave));
         ReadCallbackChain<Short> callbackChain = new ReadCallbackChain<>();
         ReadCallback<Short> waveChartCallback = new ReadCallback<>(portWave);
-        int sampleRate = (int) (10 * 1000);
-        WaveWriter saveWavFileCallback = new WaveWriter(new File("wave-records/serial-2.wav"), 10*sampleRate, sampleRate);
+        int sampleRate = 9600;
+        WaveWriter saveWavFileCallback = new WaveWriter(new File("wav-records/serial-3.wav"), 10*sampleRate, sampleRate);
 
         callbackChain.getCallbackList().add(waveChartCallback);
         callbackChain.getCallbackList().add(saveWavFileCallback);

@@ -49,7 +49,6 @@ public class WaveWriter<T extends Number> implements Callback<T[], Void> {
                 newSamples.length;
         // 写入缓存
         for (int i = 0; i < writeCount; i++) {
-            // 2 倍增益
             this.samples[this.fillOffset++] = newSamples[i].intValue();
         }
         // 如果数量足够就写文件
@@ -64,6 +63,15 @@ public class WaveWriter<T extends Number> implements Callback<T[], Void> {
     private void writeWavFile() {
         logger.debug("开始写 WAV 文件：{}", this.wavFile);
         try {
+            // 先进行一些信号处理
+            // 1. 中心归零
+            int mean = mean(this.samples);
+            for (int i=0; i<this.samples.length; i++) {
+                this.samples[i] -= mean;
+                this.samples[i] *= 2;
+            }
+            // 2. 增益 X 2
+
             // Calculate the number of frames required for specified duration
             // sample count == frame count
             long numFrames = this.wavSampleCount;
@@ -79,5 +87,13 @@ public class WaveWriter<T extends Number> implements Callback<T[], Void> {
         } catch (Exception e) {
             logger.error("写 WAV 文件 {} 失败！", this.wavFile, e);
         }
+    }
+
+    private int mean(int[] samples) {
+        long sum = 0;
+        for(int s : samples) {
+            sum += s;
+        }
+        return (int) (sum / (samples.length + 1));
     }
 }
